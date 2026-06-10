@@ -1,0 +1,57 @@
+Xeno Mini CRM - Walkthrough Video Transcript
+Presenter: Bandela Mahesh
+College: Lovely Professional University
+Registration No: 12311419
+
+---
+
+[00:00 - 00:30] SECTION 1: PRODUCT INTRO & VISION
+
+"Hello everyone! My name is Bandela Mahesh, and I am a software engineering candidate from Lovely Professional University. Today, I am thrilled to present my submission for the Xeno SDE Internship Assignment: the Xeno Mini CRM. 
+
+Traditional CRMs require marketers to navigate complex forms, dropdowns, and segmentation builders to fire a simple campaign. The core bet of this application is a chat-first, AI-native workflow. By simply typing an intent in plain English, our Gemini AI assistant handles the heavy lifting: it builds the database segment filters, drafts a personalized message template, previews matching recipients, and allows the marketer to launch the campaign in one click."
+
+---
+
+[00:30 - 02:00] SECTION 2: FUNCTIONAL DEMO
+
+"Let's see this in action. I will type in my intent: 'Reach customers in Mumbai who bought beauty products at least twice'. 
+
+As soon as I hit send, our backend processes the query through Gemini. Immediately, the UI renders the campaign details dynamically. On the left card, we see the 'Audience Segment' details: it resolved the location to Mumbai, the category to Beauty, and the minimum orders filter. It shows us that 31 customers in our database match this segment, and displays an interactive, real-time preview table showing their names, cities, emails, and phone numbers. 
+
+On the right card, Gemini has generated a personalized message template using tags like name and city. Let's customize this campaign name to 'Mumbai Beauty Promo' and click 'Launch Campaign'.
+
+Once launched, we are immediately redirected to the Campaign Performance Dashboard. Here, we can watch our campaign status change to RUNNING. In real time, the progress bars and statistics for sent, delivered, opened, clicked, and failed messages start updating. This live-updating dashboard provides immediate engagement insights as recipients interact with our campaign."
+
+---
+
+[02:00 - 03:00] SECTION 3: SYSTEM ARCHITECTURE & WEBHOOK CALLBACKS
+
+"Now, let's talk about the system architecture. This project consists of three separate services to mirror a real-world enterprise campaign manager. 
+
+First, we have the Next.js Frontend. Second, we have the Express CRM Backend powered by Prisma ORM and PostgreSQL. Third, we have a separate Channel Stub Service. 
+
+When a campaign is launched, the CRM backend dispatches the messages to the Channel Stub. Instead of simply updating the database state statically, the Channel Stub simulates a real SMS/WhatsApp gateway. It introduces realistic network delays and sends webhook callbacks back to the CRM backend endpoint at '/api/receipts' with event statuses like 'delivered', 'opened', 'clicked', or 'failed'. The CRM backend processes these webhooks asynchronously and idempotently to update campaign metrics. This ensures our stats are perfectly synchronized with actual delivery logs."
+
+---
+
+[03:00 - 04:00] SECTION 4: CODE WALKTHROUGH
+
+"Let's dive into the code. 
+
+Here is our AI service layer at `gemini.ts`. It initializes the Google Generative AI SDK using the `gemini-2.5-flash` model. We pass a detailed system prompt instructing Gemini to parse natural language queries into a structured JSON schema containing segment filters (like min_orders, city, product_category), a suggested message template, and a friendly chat reply. If the Gemini API key is not supplied, it safely falls back to a rule-based parser so the system remains fully functional offline.
+
+Next, look at the webhook handler in `receipts.ts`. To prevent duplicate event tracking from network retries, we run a transaction that does an idempotency check, progress-funnel validation (so we don't overwrite a click status with a delivery status), and updates campaign counters."
+
+---
+
+[04:00 - 05:00] SECTION 5: AI-NATIVE WORKFLOW & TRADEOFFS
+
+"During this build, I leaned heavily on an AI-native workflow. I used Gemini to design and test the segment extraction prompt, generate the 1,200 mock order records in our seeding script, and troubleshoot a race condition in the async callback loop.
+
+To build this quickly within a production-ready framework, I made a few explicit design tradeoffs:
+1. For development ease, we bypass login authentication. In a production build, this would use JWT and organization scopes.
+2. Webhook metrics are updated in Next.js using polling. At scale, this would be refactored to Server-Sent Events (SSE) or WebSockets.
+3. Message queues are simulated in memory using timeouts; for scale, we would use Redis and BullMQ.
+
+Thank you so much for your time and consideration. I am excited about the opportunity to join Xeno as an SDE Intern and build AI-first solutions!"
