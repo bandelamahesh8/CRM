@@ -1,0 +1,79 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Customer {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  phone     String
+  city      String
+  gender    String
+  age       Int
+  createdAt DateTime  @default(now())
+  orders    Order[]
+  messages  Message[]
+
+  @@map("customers")
+}
+
+model Order {
+  id              Int      @id @default(autoincrement())
+  customerId      Int      @map("customer_id")
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  amount          Float
+  productName     String   @map("product_name")
+  productCategory String   @map("product_category")
+  orderedAt       DateTime @map("ordered_at")
+
+  @@map("orders")
+}
+
+model Campaign {
+  id              String    @id @default(uuid())
+  name            String
+  segmentQuery    Json      @map("segment_query")
+  messageTemplate String      @map("message_template")
+  channel         String
+  status          String    @default("DRAFT") // DRAFT, RUNNING, COMPLETED
+  createdAt       DateTime  @default(now()) @map("created_at")
+  totalSent       Int       @default(0) @map("total_sent")
+  totalDelivered  Int       @default(0) @map("total_delivered")
+  totalFailed     Int       @default(0) @map("total_failed")
+  totalOpened     Int       @default(0) @map("total_opened")
+  totalClicked    Int       @default(0) @map("total_clicked")
+  messages        Message[]
+
+  @@map("campaigns")
+}
+
+model Message {
+  id                  String    @id @default(uuid())
+  campaignId          String    @map("campaign_id")
+  campaign            Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  customerId          Int       @map("customer_id")
+  customer            Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  personalizedMessage String    @map("personalized_message")
+  channel             String
+  status              String    @default("PENDING") // PENDING, SENT, DELIVERED, FAILED, OPENED, CLICKED
+  sentAt              DateTime? @map("sent_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  receipts            Receipt[]
+
+  @@map("messages")
+}
+
+model Receipt {
+  id         String   @id @default(uuid())
+  messageId  String   @map("message_id")
+  message    Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  event      String // DELIVERED, FAILED, OPENED, CLICKED
+  receivedAt DateTime @default(now()) @map("received_at")
+
+  @@map("receipts")
+}
